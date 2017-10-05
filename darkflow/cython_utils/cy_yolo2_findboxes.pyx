@@ -65,28 +65,35 @@ def box_constructor(meta,np.ndarray[float,ndim=3] net_out_in):
     C = meta['classes']
     B = meta['num']
     
+    '''
+    net_out_in is what we get from yolo net
+    net_out_in: [H,W,B,(5+C)*B]
+    Classes: [H,W,B,C]
+    Bbox_pred: [H,W,B,5]
+    probs: [H,W,B,C]
+    '''
     cdef:
         float[:, :, :, ::1] net_out = net_out_in.reshape([H, W, B, net_out_in.shape[2]/B])
         float[:, :, :, ::1] Classes = net_out[:, :, :, 5:]
-        float[:, :, :, ::1] Bbox_pred =  net_out[:, :, :, :5]
+        float[:, :, :, ::1] Bbox_pred =  net_out[:, :, :, :5] #[confidence,x,y,w,h]
         float[:, :, :, ::1] probs = np.zeros((H, W, B, C), dtype=np.float32)
     
     for row in range(H):
         for col in range(W):
-            for box_loop in range(B): # every class
+            for box_loop in range(B): 
                 arr_max=0
                 sum=0;
-                Bbox_pred[row, col, box_loop, 4] = expit_c(Bbox_pred[row, col, box_loop, 4])
-                Bbox_pred[row, col, box_loop, 0] = (col + expit_c(Bbox_pred[row, col, box_loop, 0])) / W
-                Bbox_pred[row, col, box_loop, 1] = (row + expit_c(Bbox_pred[row, col, box_loop, 1])) / H
+                Bbox_pred[row, col, box_loop, 4] = expit_c(Bbox_pred[row, col, box_loop, 4]) #use softmax to map to (0,1)
+                Bbox_pred[row, col, box_loop, 0] = (col + expit_c(Bbox_pred[row, col, box_loop, 0])) / W #offset to each grid -> x coordinate w.r.t W
+                Bbox_pred[row, col, box_loop, 1] = (row + expit_c(Bbox_pred[row, col, box_loop, 1])) / H #offset to each grid -> x coordinate w.r.t H
                 Bbox_pred[row, col, box_loop, 2] = exp(Bbox_pred[row, col, box_loop, 2]) * anchors[2 * box_loop + 0] / W
                 Bbox_pred[row, col, box_loop, 3] = exp(Bbox_pred[row, col, box_loop, 3]) * anchors[2 * box_loop + 1] / H
                 #SOFTMAX BLOCK, no more pointer juggling
                 for class_loop in range(C):
-                    arr_max=max_c(arr_max,Classes[row,col,box_loop,class_loop])
+                    arr_max=max_c(arr_max,Classes[row,col,box_loop,class_loop]) # get max
                 
                 for class_loop in range(C):
-                    Classes[row,col,box_loop,class_loop]=exp(Classes[row,col,box_loop,class_loop]-arr_max)
+                    Classes[row,col,box_loop,class_loop]=exp(Classes[row,col,box_loop,class_loop]-arr_max) # map from [min,max] to [exp(min-max),1]
                     sum+=Classes[row,col,box_loop,class_loop]
                 
                 for class_loop in range(C):

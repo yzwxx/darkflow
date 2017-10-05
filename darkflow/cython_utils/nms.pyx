@@ -11,6 +11,12 @@ from ..utils.box import BoundBox
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
 @cython.cdivision(True)
 cdef float overlap_c(float x1, float w1 , float x2 , float w2):
+    '''
+    x1: x coordinate of box1
+    w1: width of box1
+    x2: x coordinate of box2
+    w2: width of box2
+    '''
     cdef:
         float l1,l2,left,right
     l1 = x1 - w1 /2.
@@ -32,7 +38,7 @@ cdef float box_intersection_c(float ax, float ay, float aw, float ah, float bx, 
     h = overlap_c(ay, ah, by, bh)
     if w < 0 or h < 0: return 0
     area = w * h
-    return area
+    return area # the area of intersection
 
 #BOX UNION
 @cython.boundscheck(False) # turn off bounds-checking for entire function
@@ -42,7 +48,7 @@ cdef float box_union_c(float ax, float ay, float aw, float ah, float bx, float b
     cdef:
         float i,u
     i = box_intersection_c(ax, ay, aw, ah, bx, by, bw, bh)
-    u = aw * ah + bw * bh -i
+    u = aw * ah + bw * bh -i # S(aUb) = S(a) + S(b) - S(a&b)
     return u
 
 
@@ -61,23 +67,28 @@ cdef float box_iou_c(float ax, float ay, float aw, float ah, float bx, float by,
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
 @cython.cdivision(True)
 cdef NMS(float[:, ::1] final_probs , float[:, ::1] final_bbox):
+    '''
+    final_probs: [SS*B,C]
+    final_bbox: [SS*B,4]
+    '''
     cdef list boxes = list()
     cdef set indices = set()
     cdef:
         np.intp_t pred_length,class_length,class_loop,index,index2
+        float iou_thres 
 
-  
-    pred_length = final_bbox.shape[0]
-    class_length = final_probs.shape[1]
+    iou_thres = 0.4
+    pred_length = final_bbox.shape[0] # SS*B
+    class_length = final_probs.shape[1] # C
     for class_loop in range(class_length):
         for index in range(pred_length):
             if final_probs[index,class_loop] == 0: continue
             for index2 in range(index+1,pred_length):
                 if final_probs[index2,class_loop] == 0: continue
-                if index==index2 : continue
-                if box_iou_c(final_bbox[index,0],final_bbox[index,1],final_bbox[index,2],final_bbox[index,3],final_bbox[index2,0],final_bbox[index2,1],final_bbox[index2,2],final_bbox[index2,3]) >= 0.4:
+                if index==index2 : continue # this will never happen?
+                if box_iou_c(final_bbox[index,0],final_bbox[index,1],final_bbox[index,2],final_bbox[index,3],final_bbox[index2,0],final_bbox[index2,1],final_bbox[index2,2],final_bbox[index2,3]) >= iou_thres:
                     if final_probs[index2,class_loop] > final_probs[index, class_loop] :
-                        final_probs[index, class_loop] =0
+                        final_probs[index, class_loop] = 0
                         break
                     final_probs[index2,class_loop]=0
             
