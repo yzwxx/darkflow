@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+'''
+argHandler
+'''
 class argHandler(dict):
     #A super duper fancy custom made CLI argument handler!!
     __getattr__ = dict.get
@@ -6,6 +12,7 @@ class argHandler(dict):
     _descriptions = {'help, --h, -h': 'show this super helpful message and exit'}
     
     def setDefaults(self):
+        # the default setting for darkflow net
         self.define('imgdir', './sample_img/', 'path to testing directory with images')
         self.define('binary', './bin/', 'path to .weights directory')
         self.define('config', './cfg/', 'path to .cfg directory')
@@ -37,6 +44,7 @@ class argHandler(dict):
         self.define('metaLoad', '', 'path to .meta file generated during --savepb that corresponds to .pb file')
 
     def define(self, argName, default, description):
+        # add a new arguement to defaut setting
         self[argName] = default
         self._descriptions[argName] = description
     
@@ -61,7 +69,7 @@ class argHandler(dict):
                 print('ERROR - Invalid argument: ' + args[i])
                 print('Try running flow --help')
                 exit()
-            argumentName = args[i][2:]
+            argumentName = args[i][2:] # --model -> model
             if isinstance(self.get(argumentName), bool):
                 if not (i + 1) >= len(args) and (args[i + 1].lower() != 'false' and args[i + 1].lower() != 'true') and not args[i + 1].startswith('--'):
                     print('ERROR - Expected boolean value (or no value) following argument: ' + args[i])
@@ -69,10 +77,11 @@ class argHandler(dict):
                     exit()
                 elif not (i + 1) >= len(args) and (args[i + 1].lower() == 'false' or args[i + 1].lower() == 'true'):
                     self[argumentName] = (args[i + 1].lower() == 'true')
-                    i += 1
-                else:
+                    # i += 1 # this should be a mistake
+                else: # defaut to be True if argv is missed
                     self[argumentName] = True
             elif args[i].startswith('--') and not (i + 1) >= len(args) and not args[i + 1].startswith('--') and argumentName in self:
+                # like --model yolo.cfg
                 if isinstance(self[argumentName], float):
                     try:
                         args[i + 1] = float(args[i + 1])
@@ -88,9 +97,9 @@ class argHandler(dict):
                         print('Try running flow --help')
                         exit()
                 self[argumentName] = args[i + 1]
-                i += 1
+                i += 1 # skip one argv since it's the configuration of last argv
             else:
                 print('ERROR - Invalid argument: ' + args[i])
                 print('Try running flow --help')
                 exit()
-            i += 1
+            i += 1 # go to next

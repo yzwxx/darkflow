@@ -12,7 +12,7 @@ from nms cimport NMS
 @cython.boundscheck(False) # turn off bounds-checking for entire function
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
 def yolo_box_constructor(meta,np.ndarray[float] net_out, float threshold):
-
+    # what is this meta? net_out?
     cdef:
         float sqrt
         int C,B,S
@@ -22,10 +22,10 @@ def yolo_box_constructor(meta,np.ndarray[float] net_out, float threshold):
 
     
     sqrt =  meta['sqrt'] + 1
-    C, B, S = meta['classes'], meta['num'], meta['side']
+    C, B, S = meta['classes'], meta['num'], meta['side'] # cls num,num of bbox for each grid cell, grid size
     boxes = []
     SS        =  S * S # number of grid cells
-    prob_size = SS * C # class probabilities
+    prob_size = SS * C # probabilities of grid (x,y) detected as class c
     conf_size = SS * B # confidences for each grid cell
 
     cdef:

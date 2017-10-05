@@ -7,6 +7,7 @@ from ..utils.box import BoundBox
 from nms cimport NMS
 
 #expit
+# sigmoid function
 @cython.boundscheck(False) # turn off bounds-checking for entire function
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
 @cython.cdivision(True)
@@ -15,6 +16,7 @@ cdef float expit_c(float x):
     return y
 
 #MAX
+#max(a,b)
 @cython.boundscheck(False) # turn off bounds-checking for entire function
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
 @cython.cdivision(True)
@@ -71,7 +73,7 @@ def box_constructor(meta,np.ndarray[float,ndim=3] net_out_in):
     
     for row in range(H):
         for col in range(W):
-            for box_loop in range(B):
+            for box_loop in range(B): # every class
                 arr_max=0
                 sum=0;
                 Bbox_pred[row, col, box_loop, 4] = expit_c(Bbox_pred[row, col, box_loop, 4])

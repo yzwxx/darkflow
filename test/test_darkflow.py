@@ -45,7 +45,7 @@ tiny_yolo_voc_Download = "https://pjreddie.com/media/files/tiny-yolo-voc.weights
 
 def download_file(url, savePath):
     fileName = savePath.split("/")[-1]
-    if not os.path.isfile(savePath):
+    if not os.path.isfile(savePath): # file haven't been downloaded yet
         os.makedirs(os.path.dirname(savePath), exist_ok=True) #Make directories nessecary for file incase they don't exist
         print("Downloading " + fileName + " file...")
         r = requests.get(url, stream=True)

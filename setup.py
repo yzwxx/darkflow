@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+'''
+set up darkflow locally 
+'''
+
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
 from Cython.Build import cythonize
